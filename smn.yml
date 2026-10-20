@@ -1,0 +1,25 @@
+name: Datos del SMN
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  smn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bajar estaciones de Mendoza
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request
+          req = urllib.request.Request("https://ws.smn.gob.ar/map_items/weather", headers={"User-Agent": "Mozilla/5.0"})
+          datos = json.load(urllib.request.urlopen(req, timeout=60))
+          mza = [x for x in datos if "mendoza" in str(x.get("province", "")).lower()]
+          json.dump(mza, open("smn.json", "w"), ensure_ascii=False)
+          PY
+      - name: Guardar
+        run: |
+          git config user.name "clima-bot"; git config user.email "bot@users.noreply.github.com"
+          git add smn.json && (git diff --cached --quiet || git commit -m "smn" && git push) || true

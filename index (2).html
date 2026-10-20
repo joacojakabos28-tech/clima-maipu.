@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clima en Maipú, Mendoza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--cielo:#1d2b4f;--malbec:#5a1f3d;--sol:#f3b948;--nieve:#eef1f7;--tierra:#c9794a;--tinta:#16182a;--card:#ffffff;--muted:#5d6277;--ok:#2f7d57;--warn:#b7791f;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--nieve:#12162a;--card:#1b2140;--tinta:#eef1f7;--muted:#a3a9c4}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--nieve);color:var(--tinta);line-height:1.5}
+header{position:relative;background:linear-gradient(180deg,var(--cielo) 0%,var(--malbec) 100%);color:#fff;padding:2.5rem 1.25rem 7rem;overflow:hidden}
+header h1{margin:0;font-size:clamp(1rem,3vw,1.25rem);font-weight:600;opacity:.85}
+.temp{font-size:clamp(5rem,22vw,10rem);font-weight:800;line-height:.95;letter-spacing:-.04em;margin:.5rem 0 0}
+.desc{font-size:1.4rem;font-weight:600}
+.sub{opacity:.8;max-width:60ch}
+.sierra{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:110px}
+main{max-width:1000px;margin:-3rem auto 3rem;padding:0 1rem;position:relative}
+section{background:var(--card);border-radius:14px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+h2{margin:0 0 .75rem;font-size:1.15rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem}
+.dato b{display:block;font-size:1.5rem}
+.dato span{color:var(--muted);font-size:.9rem}
+.alerta{border-left:6px solid var(--warn);padding:.6rem .9rem;margin:.5rem 0;background:rgba(183,121,31,.1);border-radius:6px}
+.alerta.alta{border-color:var(--bad);background:rgba(179,38,30,.1)}
+.alerta.ok{border-color:var(--ok);background:rgba(47,125,87,.1)}
+.alerta strong{display:block}
+.horas{display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.5rem}
+.hora{min-width:64px;text-align:center;font-size:.9rem}
+.hora b{display:block;font-size:1.1rem}
+.dias{width:100%;border-collapse:collapse}
+.dias td{padding:.5rem .25rem;border-bottom:1px solid rgba(128,128,150,.2)}
+.dias td:last-child{text-align:right}
+button,.btn{font:inherit;font-weight:600;background:var(--cielo);color:#fff;border:0;border-radius:8px;padding:.6rem 1rem;cursor:pointer;text-decoration:none;display:inline-block}
+button:focus-visible,.btn:focus-visible,input:focus-visible{outline:3px solid var(--sol);outline-offset:2px}
+input{font:inherit;padding:.55rem;border-radius:8px;border:1px solid #9aa;width:min(100%,420px);background:var(--card);color:var(--tinta)}
+svg text{fill:var(--muted);font-size:11px}
+select{font:inherit;padding:.3rem;border-radius:6px}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:2rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>Maipú, Mendoza, Argentina</h1>
+  <div class="temp" id="temp">--°</div>
+  <div class="desc" id="desc">Cargando el clima…</div>
+  <div class="sub" id="sub"></div>
+  <p class="sub"><label for="modelo">Modelo de pronóstico: </label><select id="modelo"><option value="ecmwf_ifs025">ECMWF (Europeo)</option><option value="gfs_seamless">GFS (EE.UU.)</option><option value="icon_seamless">ICON (Alemania)</option><option value="best_match">Automático</option></select></p>
+  <svg class="sierra" viewBox="0 0 1000 110" preserveAspectRatio="none" aria-hidden="true"><path d="M0 110V70l60-25 50 30 70-55 60 40 80-35 70 45 90-60 80 55 70-30 90 50 70-35 60 45 50-20 50 25v40z" fill="#eef1f7" opacity=".25"/><path d="M0 110V90l80-30 60 35 90-45 70 40 100-35 80 40 90-50 90 50 100-30 80 35 60-20v50z" fill="var(--nieve)"/></svg>
+</header>
+<main>
+  <section id="alertas" aria-live="polite"><h2>Alertas para la familia</h2><div id="listaAlertas">Calculando…</div>
+    <p><label for="mails">Mails de la familia (separados por coma)</label><br><input id="mails" type="text" placeholder="mama@gmail.com, papa@gmail.com"></p>
+    <a class="btn" id="enviar" href="#" target="_blank" rel="noopener">Redactar aviso en Gmail</a>
+  </section>
+  <section><h2 id="smnT">Dato medido (SMN)</h2><div class="grid" id="smn">Buscando la estación más cercana…</div></section>
+  <section><h2>Ahora (según el modelo)</h2><div class="grid" id="ahora"></div></section>
+  <section><h2>Próximas 24 horas</h2><div id="grafico"></div><div class="horas" id="horas"></div></section>
+  <section><h2>Lluvia: próximas 24 horas</h2><p id="lluviaTotal" style="margin:0 0 .5rem;color:var(--muted)"></p><div id="graficoLluvia"></div></section>
+  <section><h2>Viento: próximas 24 horas</h2><p style="margin:0 0 .5rem;color:var(--muted)"><b style="color:#2a9d8f">Viento</b> sostenido y <b style="color:#c9794a">ráfagas</b>, en km/h</p><div id="graficoViento"></div></section>
+  <section><h2>Pronóstico de 7 días</h2><table class="dias" id="dias"></table></section>
+  <section><h2>Sol y calidad del aire</h2><div class="grid" id="extra"></div></section>
+</main>
+<footer>Datos: Servicio Meteorológico Nacional y Open-Meteo · Se actualiza cada 15 minutos · <span id="act"></span></footer>
+<script>
+const LAT=-32.9786,LON=-68.7886,TZ='America/Argentina/Mendoza';
+const WC={0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Niebla',48:'Niebla con escarcha',51:'Llovizna leve',53:'Llovizna',55:'Llovizna intensa',61:'Lluvia leve',63:'Lluvia',65:'Lluvia fuerte',71:'Nieve leve',73:'Nieve',75:'Nieve fuerte',80:'Chubascos',81:'Chubascos fuertes',82:'Chubascos violentos',95:'Tormenta',96:'Tormenta con granizo',99:'Tormenta con granizo fuerte'};
+const wc=c=>WC[c]||WC[Object.keys(WC).filter(k=>k<=c).pop()]||'—';
+const dir=d=>['N','NE','E','SE','S','SO','O','NO'][Math.round(d/45)%8];
+const dia=s=>new Date(s+'T12:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'short'});
+const $=id=>document.getElementById(id);
+let ultimo=[];
+const modelo=()=>{try{return localStorage.getItem('modelo')||'ecmwf_ifs025'}catch(e){return 'ecmwf_ifs025'}};
+async function smn(){
+  let data=null;
+  try{const r=await fetch('https://ws.smn.gob.ar/map_items/weather');if(r.ok)data=await r.json()}catch(e){}
+  if(!data){try{const r=await fetch('smn.json?'+Date.now());if(r.ok)data=await r.json()}catch(e){}}
+  if(!Array.isArray(data))return null;
+  let best=null,bd=1e9;
+  for(const x of data){
+    if(x.province&&!/mendoza/i.test(x.province))continue;
+    if(!x.weather||x.weather.temp==null)continue;
+    const dd=Math.hypot(+x.lat-LAT,+x.lon-LON);
+    if(dd<bd){bd=dd;best=x}
+  }
+  return best;
+}
+function calcularAlertas(d,aq){
+  const A=[],i0=Math.max(0,d.hourly.time.findIndex(t=>t>=d.current.time));
+  const H=k=>d.hourly[k].slice(i0,i0+24);
+  const gust=Math.max(...H('wind_gusts_10m')),cod=H('weather_code');
+  const zonda=H('wind_gusts_10m').some((g,i)=>g>=45&&H('relative_humidity_2m')[i]<=30&&H('temperature_2m')[i]>=22);
+  const D=d.daily;
+  if(zonda)A.push(['alta','Posible viento Zonda','Ráfagas fuertes, aire seco y cálido. Cuidado con polvo, incendios y objetos sueltos.']);
+  else if(gust>=60)A.push(['alta','Viento fuerte','Ráfagas de hasta '+Math.round(gust)+' km/h.']);
+  if(cod.some(c=>c>=96))A.push(['alta','Tormenta con granizo','Protejan el auto y las plantas.']);
+  else if(cod.some(c=>c>=95))A.push(['media','Tormenta eléctrica','Evitar espacios abiertos.']);
+  if(D.temperature_2m_max.slice(0,2).some(t=>t>=36))A.push(['alta','Calor extremo','Máxima de '+Math.round(Math.max(...D.temperature_2m_max.slice(0,2)))+'°. Hidratarse y evitar el sol de 11 a 17.']);
+  if(D.temperature_2m_min.slice(0,2).some(t=>t<=0))A.push(['media','Helada','Mínima de '+Math.round(Math.min(...D.temperature_2m_min.slice(0,2)))+'°. Proteger plantas y cañerías.']);
+  if(D.precipitation_sum.slice(0,2).some(p=>p>=20))A.push(['media','Lluvia abundante','Más de 20 mm previstos.']);
+  if(D.uv_index_max[0]>=8)A.push(['media','Radiación UV '+(D.uv_index_max[0]>=11?'extrema':'muy alta'),'Usar protector solar y gorra.']);
+  if(aq&&(aq.us_aqi>=100||aq.dust>=100))A.push(['media','Aire con polvo o contaminación','Personas con asma o alergias, mejor adentro.']);
+  return A;
+}
+function barras(id,v,h,max,unit,color){
+  const w=900,ht=140,n=v.length,bw=(w-40)/n;
+  $(id).innerHTML=`<svg viewBox="0 0 ${w} ${ht}" width="100%" role="img" aria-label="Probabilidad de lluvia por hora">`+v.map((x,i)=>{const a=Math.max(0,x||0)/max*(ht-45);return `<rect x="${20+i*bw+2}" y="${ht-20-a}" width="${bw-4}" height="${a}" rx="3" fill="${color}"/>`+(i%3==0?`<text x="${20+i*bw+bw/2}" y="${ht-4}" text-anchor="middle">${h[i].slice(11,16)}</text><text x="${20+i*bw+bw/2}" y="${ht-24-a}" text-anchor="middle">${x==null?'–':Math.round(x)+unit}</text>`:'')}).join('')+`</svg>`;
+}
+function dosLineas(id,a,b,h){
+  const w=900,ht=140,all=a.concat(b).map(x=>x||0),max=Math.max(10,...all)*1.15;
+  const x=i=>20+i*(w-40)/(a.length-1),y=v=>ht-20-(v||0)/max*(ht-40);
+  const pl=(arr,c,d)=>`<polyline points="${arr.map((v,i)=>x(i)+','+y(v)).join(' ')}" fill="none" stroke="${c}" stroke-width="3" ${d||''}/>`;
+  $(id).innerHTML=`<svg viewBox="0 0 ${w} ${ht}" width="100%" role="img" aria-label="Viento y ráfagas">${pl(a,'#2a9d8f')}${pl(b,'#c9794a','stroke-dasharray="6 4"')}`+b.map((v,i)=>i%3==0?`<text x="${x(i)}" y="${y(v)-8}" text-anchor="middle">${Math.round(v||0)}</text><text x="${x(i)}" y="${ht-4}" text-anchor="middle">${h[i].slice(11,16)}</text>`:'').join('')+`</svg>`;
+}
+function grafico(t,h){
+  const w=900,ht=140,min=Math.min(...t)-1,max=Math.max(...t)+1;
+  const x=i=>20+i*(w-40)/(t.length-1),y=v=>ht-20-(v-min)/(max-min)*(ht-40);
+  const p=t.map((v,i)=>x(i)+','+y(v)).join(' ');
+  $('grafico').innerHTML=`<svg viewBox="0 0 ${w} ${ht}" width="100%" role="img" aria-label="Temperatura de las próximas 24 horas"><polyline points="${p}" fill="none" stroke="#c9794a" stroke-width="3"/>${t.map((v,i)=>i%3==0?`<text x="${x(i)}" y="${y(v)-8}" text-anchor="middle">${Math.round(v)}°</text><text x="${x(i)}" y="${ht-4}" text-anchor="middle">${h[i].slice(11,16)}</text>`:'').join('')}</svg>`;
+}
+async function cargar(){
+  try{
+    const q=`latitude=${LAT}&longitude=${LON}&timezone=${TZ}&wind_speed_unit=kmh`;
+    const [r1,r2,st]=await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?${q}&forecast_days=7${modelo()==='best_match'?'':'&models='+modelo()}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover&hourly=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m,precipitation_probability,weather_code,wind_gusts_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max,uv_index_max,sunrise,sunset`).then(r=>r.json()),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${q}&current=us_aqi,pm10,pm2_5,dust`).then(r=>r.json()).catch(()=>null),smn()]);
+    const c=r1.current,d=r1.daily,aq=r2&&r2.current;
+    $('temp').textContent=Math.round(c.temperature_2m)+'°';
+    $('desc').textContent=wc(c.weather_code);
+    $('sub').textContent=`Sensación de ${Math.round(c.apparent_temperature)}°. Hoy entre ${Math.round(d.temperature_2m_min[0])}° y ${Math.round(d.temperature_2m_max[0])}°.`;
+    const dato=(v,l)=>`<div class="dato"><b>${v}</b><span>${l}</span></div>`;
+    $('ahora').innerHTML=dato(c.relative_humidity_2m+'%','Humedad')+dato(Math.round(c.wind_speed_10m)+' km/h '+dir(c.wind_direction_10m),'Viento')+dato(Math.round(c.wind_gusts_10m)+' km/h','Ráfagas')+dato(Math.round(c.pressure_msl)+' hPa','Presión')+dato((c.cloud_cover??'–')+'%','Nubosidad')+dato(c.precipitation+' mm','Lluvia ahora')+dato('Índice '+(d.uv_index_max[0]??0).toFixed(0),'UV máximo hoy');
+    if(st){
+      const w=st.weather,dif=Math.round(c.temperature_2m-w.temp);
+      $('smnT').textContent='Dato medido: estación '+st.name+' (SMN)';
+      $('smn').innerHTML=dato(Math.round(w.temp*10)/10+'°','Temperatura medida')+dato((w.humidity??'–')+'%','Humedad')+dato((w.wind_speed??'–')+' km/h '+(w.wind_deg||''),'Viento')+dato(w.pressure??'–','Presión (hPa)')+dato(w.description||'–','Estado')+dato((dif>0?'+':'')+dif+'°','Diferencia del modelo');
+      $('temp').textContent=Math.round(w.temp)+'°';
+      $('desc').textContent=w.description||wc(c.weather_code);
+      $('sub').textContent=`Medido en ${st.name}. El modelo marca ${Math.round(c.temperature_2m)}°. Hoy, según el modelo, entre ${Math.round(d.temperature_2m_min[0])}° y ${Math.round(d.temperature_2m_max[0])}°.`;
+    }else $('smn').textContent='No pudimos conectar con el SMN, se muestra solo el modelo.';
+    const i0=Math.max(0,r1.hourly.time.findIndex(t=>t>=c.time)),sl=k=>r1.hourly[k].slice(i0,i0+24);
+    grafico(sl('temperature_2m'),sl('time'));
+    const mm=sl('precipitation').reduce((s,x)=>s+(x||0),0);
+    $('lluviaTotal').textContent=(mm>0?'Se esperan unos '+mm.toFixed(1)+' mm en las próximas 24 horas.':'No se espera lluvia medible en las próximas 24 horas.')+' Las barras muestran la probabilidad por hora.';
+    barras('graficoLluvia',sl('precipitation_probability'),sl('time'),100,'%','#4f7cff');
+    dosLineas('graficoViento',sl('wind_speed_10m'),sl('wind_gusts_10m'),sl('time'));
+    $('horas').innerHTML=sl('time').map((t,i)=>`<div class="hora">${t.slice(11,16)}<b>${Math.round(sl('temperature_2m')[i])}°</b>${sl('precipitation_probability')[i]??'–'}%</div>`).join('');
+    $('dias').innerHTML=d.time.map((t,i)=>`<tr><td>${dia(t)}</td><td>${wc(d.weather_code[i])}</td><td>Lluvia ${d.precipitation_probability_max[i]??'–'}%</td><td>${Math.round(d.temperature_2m_min[i])}° / <b>${Math.round(d.temperature_2m_max[i])}°</b></td></tr>`).join('');
+    $('extra').innerHTML=dato(d.sunrise[0].slice(11),'Amanecer')+dato(d.sunset[0].slice(11),'Atardecer')+(aq?dato(aq.us_aqi,'Calidad del aire (AQI)')+dato(aq.pm10+' µg/m³','Polvo en suspensión (PM10)')+dato(aq.pm2_5+' µg/m³','Partículas finas (PM2.5)'):'');
+    ultimo=calcularAlertas(r1,aq);
+    $('listaAlertas').innerHTML=ultimo.length?ultimo.map(a=>`<div class="alerta ${a[0]}"><strong>${a[1]}</strong>${a[2]}</div>`).join(''):'<div class="alerta ok"><strong>Sin alertas</strong>No hay avisos para las próximas 24 horas.</div>';
+    $('act').textContent='Última carga: '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    window.cActual=c;armarMail(c);
+  }catch(e){$('desc').textContent='No pudimos cargar el clima';$('sub').textContent='Revisá tu conexión y recargá la página. Detalle técnico: '+e.message}
+}
+function armarMail(c){
+  const cuerpo=`Clima en Maipú ahora: ${Math.round(c.temperature_2m)}°, ${wc(c.weather_code)}.\n\n`+(ultimo.length?ultimo.map(a=>`• ${a[1]}: ${a[2]}`).join('\n'):'Sin alertas por ahora.');
+  const to=$('mails').value.replace(/\s/g,'');
+  $('enviar').href=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent('Aviso del clima en Maipú')}&body=${encodeURIComponent(cuerpo)}`;
+}
+$('modelo').value=modelo();
+$('modelo').addEventListener('change',e=>{try{localStorage.setItem('modelo',e.target.value)}catch(x){}cargar()});
+try{$('mails').value=localStorage.getItem('mails')||''}catch(e){}
+$('mails').addEventListener('input',()=>{try{localStorage.setItem('mails',$('mails').value)}catch(e){}window.cActual&&armarMail(window.cActual)});
+cargar().then(()=>{});setInterval(cargar,15*60*1000);
+</script>
+</body>
+</html>
